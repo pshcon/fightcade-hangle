@@ -1,7 +1,7 @@
 # fightcade-hangle
 한글패치 - inGame
 
-[⬇️ 다운로드 (fcadefbneo_hangul_patch.zip)](https://github.com/seonghonge/fightcade-hangle/raw/main/fcadefbneo_hangul_patch.zip)
+[⬇️ 다운로드 (fcadefbneo_hangul_patch.zip)](https://github.com/seonghonge/fightcade-hangle/releases/download/v1.0/fcadefbneo_.zip)
 
 클릭하면 바로 zip 파일이 다운로드됨. (별도 회원가입/로그인 필요 없음)
 
@@ -12,7 +12,7 @@
      (Fightcade 설치 경로 예: 문서\Fightcade\emulator\fbneo\ 또는 설치할 때 지정한 위치의 emulator\fbneo\ 폴더)
   4. 그대로 Fightcade 실행하면 끝 (다른 설정 건드릴 필요 없음)
 
-## 안전성 확인
+## 바이러스 여부
 
 - SHA256: `25d47933e36d7464e733e429202808cd10f14991020a0386717073e2298bd4d1`
 - VirusTotal 검사결과: [70여개 백신 전부 무결정(Undetected)](https://www.virustotal.com/gui/file/25d47933e36d7464e733e429202808cd10f14991020a0386717073e2298bd4d1)

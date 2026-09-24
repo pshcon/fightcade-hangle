@@ -1,7 +1,7 @@
 # fightcade-hangle
 한글패치 - inGame
 
-[⬇️ 다운로드 (fcadefbneo_한글패치.zip)](https://github.com/seonghonge/fightcade-hangle/raw/main/fcadefbneo_%ED%95%9C%EA%B8%80%ED%8C%A8%EC%B9%98.zip)
+[⬇️ 다운로드 (fcadefbneo_hangul_patch.zip)](https://github.com/seonghonge/fightcade-hangle/raw/main/fcadefbneo_hangul_patch.zip)
 
 클릭하면 바로 zip 파일이 다운로드됨. (별도 회원가입/로그인 필요 없음)
 

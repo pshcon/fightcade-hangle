@@ -17,6 +17,112 @@ extern int bMediaExit;
 int nRollbackFrames = 0;
 int nRollbackCount = 0;
 
+// Base64 wrapper for chat text: GGPO's chat channel appears to mangle
+// multi-byte (Korean UTF-8) bytes somewhere in transit, while plain ASCII
+// always survives intact. Wrapping any non-ASCII message in Base64 keeps
+// the wire bytes restricted to a safe ASCII alphabet, sidestepping whatever
+// is corrupting raw multi-byte text, without touching plain-ASCII chat at
+// all (so unpatched clients / plain English chat behave exactly as before).
+#define CHAT_B64_PREFIX "\x01U8:"
+
+// Sent once automatically when a match starts, so a patched client can tell
+// whether the opponent is also running the Korean-input patch (an unpatched
+// opponent just sees this appear once as a harmless odd-looking chat line).
+#define HANGUL_PATCH_MARKER "##HPATCH_V1##"
+bool bOpponentHangulPatched = false;
+unsigned int dwHangulMatchStartTick = 0;
+bool bNeedSendHangulMarker = false;
+// Set right when we send our own marker, so the CHAT event can tell "this is
+// my own message being echoed back to me" apart from a genuine reply from
+// the opponent, without depending on username string matching (which isn't
+// reliably known to match the library's own notion of "your name").
+static bool bHangulMarkerEchoPending = false;
+
+static const char b64_table[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static void Base64Encode(const unsigned char *data, int len, char *out, int outSize)
+{
+	int o = 0;
+	for (int i = 0; i < len && o + 4 < outSize; i += 3) {
+		unsigned int v = data[i] << 16;
+		if (i + 1 < len) v |= data[i + 1] << 8;
+		if (i + 2 < len) v |= data[i + 2];
+
+		out[o++] = b64_table[(v >> 18) & 0x3F];
+		out[o++] = b64_table[(v >> 12) & 0x3F];
+		out[o++] = (i + 1 < len) ? b64_table[(v >> 6) & 0x3F] : '=';
+		out[o++] = (i + 2 < len) ? b64_table[v & 0x3F] : '=';
+	}
+	out[o] = 0;
+}
+
+static int Base64DecodeChar(char c)
+{
+	if (c >= 'A' && c <= 'Z') return c - 'A';
+	if (c >= 'a' && c <= 'z') return c - 'a' + 26;
+	if (c >= '0' && c <= '9') return c - '0' + 52;
+	if (c == '+') return 62;
+	if (c == '/') return 63;
+	return -1;
+}
+
+static int Base64Decode(const char *in, unsigned char *out, int outSize)
+{
+	int o = 0;
+	int len = (int)strlen(in);
+	for (int i = 0; i + 3 < len + 1 && o < outSize; i += 4) {
+		int c0 = Base64DecodeChar(in[i]);
+		int c1 = (i + 1 < len) ? Base64DecodeChar(in[i + 1]) : -1;
+		int c2 = (i + 2 < len) ? Base64DecodeChar(in[i + 2]) : -1;
+		int c3 = (i + 3 < len) ? Base64DecodeChar(in[i + 3]) : -1;
+		if (c0 < 0 || c1 < 0) break;
+
+		if (o < outSize) out[o++] = (unsigned char)((c0 << 2) | (c1 >> 4));
+		if (c2 >= 0 && o < outSize) out[o++] = (unsigned char)((c1 << 4) | (c2 >> 2));
+		if (c3 >= 0 && o < outSize) out[o++] = (unsigned char)((c2 << 6) | c3);
+	}
+	return o;
+}
+
+// Encodes wide chat text for sending: plain ASCII passes through untouched,
+// anything else goes out UTF-8 + Base64 wrapped behind CHAT_B64_PREFIX.
+void ChatEncodeForSend(const TCHAR *wtext, char *out, int outSize)
+{
+	bool asciiOnly = true;
+	for (int i = 0; wtext[i]; i++) {
+		if ((unsigned short)wtext[i] > 0x7E || (unsigned short)wtext[i] < 0x20) {
+			asciiOnly = false;
+			break;
+		}
+	}
+
+	if (asciiOnly) {
+		WideCharToMultiByte(CP_UTF8, 0, wtext, -1, out, outSize, NULL, NULL);
+		return;
+	}
+
+	char utf8[(MAX_CHAT_SIZE * 4) + 1];
+	WideCharToMultiByte(CP_UTF8, 0, wtext, -1, utf8, sizeof(utf8), NULL, NULL);
+
+	strcpy(out, CHAT_B64_PREFIX);
+	int prefixLen = (int)strlen(CHAT_B64_PREFIX);
+	Base64Encode((unsigned char *)utf8, (int)strlen(utf8), out + prefixLen, outSize - prefixLen);
+}
+
+// Decodes chat text received over the wire back into wide chars.
+void ChatDecodeForDisplay(const char *raw, TCHAR *out, int outCount)
+{
+	int prefixLen = (int)strlen(CHAT_B64_PREFIX);
+	if (strncmp(raw, CHAT_B64_PREFIX, prefixLen) == 0) {
+		unsigned char utf8[2048];
+		int n = Base64Decode(raw + prefixLen, utf8, sizeof(utf8) - 1);
+		utf8[n] = 0;
+		MultiByteToWideChar(CP_UTF8, 0, (const char *)utf8, -1, out, outCount);
+	} else {
+		MultiByteToWideChar(CP_UTF8, 0, raw, -1, out, outCount);
+	}
+}
+
 static char pGameName[MAX_PATH];
 static bool bDelayLoad = false;
 static bool bDirect = false;
@@ -112,6 +218,17 @@ bool __cdecl ggpo_on_client_event_callback(GGPOClientEvent *info)
 		TCHAR szUser2[128];
 		VidOverlaySetGameInfo(ANSIToTCHAR(info->u.matchinfo.p1, szUser1, 128), ANSIToTCHAR(info->u.matchinfo.p2, szUser2, 128), kNetSpectator, iRanked, iPlayer);
 		VidSSetGameInfo(ANSIToTCHAR(info->u.matchinfo.p1, szUser1, 128), ANSIToTCHAR(info->u.matchinfo.p2, szUser2, 128), kNetSpectator, iRanked, iPlayer);
+		if (!kNetSpectator) {
+			bOpponentHangulPatched = false;
+			dwHangulMatchStartTick = GetTickCount();
+			// Don't call QuarkSendChatText() from inside this GGPO event
+			// callback directly -- MATCHINFO fires mid-handshake, and sending
+			// chat this early appears to disrupt the client's connection
+			// state machine (observed as the game failing to start at all).
+			// Defer the actual send to the main render loop instead, which is
+			// the same safe context normal user-typed chat is sent from.
+			bNeedSendHangulMarker = true;
+		}
 		break;
 	}
 
@@ -122,14 +239,24 @@ bool __cdecl ggpo_on_client_event_callback(GGPOClientEvent *info)
 
 	case GGPOCLIENT_EVENTCODE_CHAT:
 		if (strlen(info->u.chat.text) > 0) {
+			if (strncmp(info->u.chat.text, HANGUL_PATCH_MARKER, sizeof(HANGUL_PATCH_MARKER) - 1) == 0) {
+				if (bHangulMarkerEchoPending) {
+					// This is our own marker bouncing back to us, not a
+					// genuine reply from the opponent.
+					bHangulMarkerEchoPending = false;
+				} else {
+					bOpponentHangulPatched = true;
+				}
+				break;
+			}
 			TCHAR szUser[128];
 			TCHAR szText[1024];
 			ANSIToTCHAR(info->u.chat.username, szUser, 128);
-			ANSIToTCHAR(info->u.chat.text, szText, 1024);
+			ChatDecodeForDisplay(info->u.chat.text, szText, 1024);
 			VidOverlayAddChatLine(szUser, szText);
 			TCHAR szTemp[128];
 			_sntprintf(szTemp, 128, _T("«%.32hs» "), info->u.chat.username);
-			VidSAddChatLine(szTemp, 0XFFA000, ANSIToTCHAR(info->u.chat.text, NULL, 0), 0xEEEEEE);
+			VidSAddChatLine(szTemp, 0XFFA000, szText, 0xEEEEEE);
 		}
 		break;
 
@@ -665,6 +792,22 @@ bool QuarkIncrementFrame()
 void QuarkSendChatText(char *text)
 {
 	QuarkSendChatCmd(text, 'T');
+}
+
+// Called once per frame from the main render loop (a safe context, same as
+// normal user-typed chat) to actually send the deferred patch-detection
+// marker set by the MATCHINFO event handler above. Waits a couple of seconds
+// after match start before actually sending: sending immediately collides
+// with GGPO's own delay/runahead auto-negotiation (SendToPeer/CMD_DELAYRA),
+// which happens on the same chat channel in that same window and was
+// observed to destabilize the runahead value shown in-game.
+void QuarkSendHangulMarkerIfNeeded()
+{
+	if (bNeedSendHangulMarker && (GetTickCount() - dwHangulMatchStartTick) > 2000) {
+		bNeedSendHangulMarker = false;
+		bHangulMarkerEchoPending = true;
+		QuarkSendChatText((char *)HANGUL_PATCH_MARKER);
+	}
 }
 
 void QuarkSendChatCmd(char *text, char cmd)

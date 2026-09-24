@@ -1705,6 +1705,9 @@ IDI_TV_NOTWORKING       ICON    DISCARDABLE     "resource/TV Not Working.ico"
 IDI_TV_NOTFOUND_ESS     ICON    DISCARDABLE     "resource/TV Not Found.ico"
 IDI_TV_NOTFOUND_NON     ICON    DISCARDABLE     "resource/TV Not Found Non Essential.ico"
 
+IDR_HANGUL_FONT_FNT     RCDATA  DISCARDABLE     "resource/fontdata/hangul_font.fnt"
+IDR_HANGUL_FONT_PNG     RCDATA  DISCARDABLE     "resource/fontdata/hangul_font_0.png"
+
 #endif    // English (U.K.) resources
 /////////////////////////////////////////////////////////////////////////////
 

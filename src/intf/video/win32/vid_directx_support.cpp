@@ -984,11 +984,11 @@ static int VidSInitChat(int /*nFlags*/)
 	//nChatFontSize = nMaxChatFontSize - ((nMaxChatFontSize - nMinChatFontSize) * nFlags) / 4;
 	nChatFontSize = 18; // used for cheat search only at the minute so only used in a window
 
-	ChatIDFont = CreateFont(nChatFontSize, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, ANTIALIASED_QUALITY, FF_SWISS, _T("Lucida.ttf"));
+	ChatIDFont = CreateFont(nChatFontSize, 0, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, NONANTIALIASED_QUALITY, FF_SWISS, _T("Malgun Gothic"));
 	if (nChatFontSize > 20) {
-		ChatMainFont = CreateFont(nChatFontSize, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, ANTIALIASED_QUALITY, FF_SWISS, _T("Lucida"));
+		ChatMainFont = CreateFont(nChatFontSize, 0, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, NONANTIALIASED_QUALITY, FF_SWISS, _T("Malgun Gothic"));
 	} else {
-		ChatMainFont = CreateFont(nChatFontSize, 0, 0, 0, FW_BOLD, 0, 0, 0, 0, 0, 0, ANTIALIASED_QUALITY, FF_SWISS, _T("Lucida.ttf"));
+		ChatMainFont = CreateFont(nChatFontSize, 0, 0, 0, FW_BOLD, 0, 0, 0, DEFAULT_CHARSET, 0, 0, NONANTIALIASED_QUALITY, FF_SWISS, _T("Malgun Gothic"));
 	}
 
 	nChatShadowOffset = (nChatFontSize / 16) + 1;
@@ -1078,8 +1078,8 @@ static int VidSInitEdit(int nFlags)
 
 	nEditSize = nMaxChatFontSize + 8 - ((nMaxChatFontSize - nMinChatFontSize) * nFlags) / 4;
 
-	EditTextFont = CreateFont(nEditSize - 8, 0, 0, 0, FW_NORMAL, 0, 0, 0, 0, 0, 0, ANTIALIASED_QUALITY, FF_SWISS, _T("8bit.ttf"));
-	EditCursorFont = CreateFont(nEditSize - 8, 0, 0, 0, FW_NORMAL, 0, TRUE, 0, 0, 0, 0, ANTIALIASED_QUALITY, FF_SWISS, _T("8bit.ttf"));
+	EditTextFont = CreateFont(nEditSize - 8, 0, 0, 0, FW_NORMAL, 0, 0, 0, DEFAULT_CHARSET, 0, 0, NONANTIALIASED_QUALITY, FF_SWISS, _T("Malgun Gothic"));
+	EditCursorFont = CreateFont(nEditSize - 8, 0, 0, 0, FW_NORMAL, 0, TRUE, 0, DEFAULT_CHARSET, 0, 0, NONANTIALIASED_QUALITY, FF_SWISS, _T("Malgun Gothic"));
 
 	nEditShadowOffset = ((nEditSize - 8) / 16) + 1;
 
@@ -2033,7 +2033,7 @@ INT32 VidSSetStats(double fps, INT32 ping, INT32 delay)
 int VidSAddChatLine(const TCHAR* pID, int nIDRGB, const TCHAR* pMain, int nMainRGB)
 {
 	if (pID || pMain) {
-		if (!_tcscmp(pID, _T("«Command» "))) {
+		if (!_tcscmp(pID, _T("ï¿½Commandï¿½ "))) {
 			return 0;
 		}
 

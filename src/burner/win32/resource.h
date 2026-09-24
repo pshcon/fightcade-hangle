@@ -972,6 +972,9 @@
 
 // Next default values for new objects
 //
+#define IDR_HANGUL_FONT_FNT             400001
+#define IDR_HANGUL_FONT_PNG             400002
+
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1

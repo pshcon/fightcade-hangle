@@ -6,6 +6,10 @@
 #include "vid_detector.h"
 #include <d3dx9.h>
 
+extern bool bOpponentHangulPatched;
+extern unsigned int dwHangulMatchStartTick;
+void QuarkSendHangulMarkerIfNeeded();
+
 //#define PRINT_DEBUG_INFO
 //#define TEST_OVERLAY
 //#define TEST_VERSION				L"RC7 v3"
@@ -1049,6 +1053,29 @@ void VidOverlayRender(const RECT &dest, int gameWidth, int gameHeight, int scan_
 	VidOverlaySetChatInput(_T("testing chat input with a long sentence..."));
 #endif
 
+	// send the deferred patch-detection marker (set by fbn_ggpo.cpp's
+	// MATCHINFO handler) from here, the same safe main-loop context normal
+	// user-typed chat is sent from.
+	QuarkSendHangulMarkerIfNeeded();
+
+	// Korean-input patch status line, shown once per match, queued the same
+	// way as any other chat line so it sits adjacent to whatever's already
+	// there (no artificial gap). Waits briefly for the opponent's
+	// patch-detection marker before deciding which variant to show, since
+	// that arrives over the network shortly after match start.
+	if (kNetGame && !kNetSpectator) {
+		static bool creditShown = false;
+		if (!creditShown) {
+			if (bOpponentHangulPatched) {
+				VidOverlayAddChatLine(_T("System"), _T("상대 한글패치 O"));
+				creditShown = true;
+			} else if (dwHangulMatchStartTick != 0 && (GetTickCount() - dwHangulMatchStartTick) > 5000) {
+				VidOverlayAddChatLine(_T("System"), _T("상대 한글패치 X"));
+				creditShown = true;
+			}
+		}
+	}
+
 	// save to chat history
 	if (bVidSaveChatHistory && kNetGame && !kNetSpectator) {
 		static bool enabled = false;
@@ -1219,6 +1246,14 @@ void VidOverlayRender(const RECT &dest, int gameWidth, int gameHeight, int scan_
 				float len = fontGetTextWidth(chat_names[i].str, FNT_CHAT);
 				chat_names[i].Render(cx, cy, 1.f, FNT_CHAT, FONT_ALIGN_LEFT);
 				chat_lines[i].Render(cx + len + 0.006f, cy, 1.f, FNT_CHAT, FONT_ALIGN_LEFT);
+
+				// Append the credit tag in a smaller font right after the
+				// Korean-patch status line, without shrinking the line's own
+				// chat-sized text.
+				if (!wcscmp(chat_lines[i].str, _T("상대 한글패치 O")) || !wcscmp(chat_lines[i].str, _T("상대 한글패치 X"))) {
+					float lineLen = fontGetTextWidth(chat_lines[i].str, FNT_CHAT);
+					fontWrite(_T(" - patched by 성홍이"), cx + len + 0.006f + lineLen, cy, 0xFFFFFFFF, 1.f, FNT_SMA, FONT_ALIGN_LEFT);
+				}
 			}
 		}
 

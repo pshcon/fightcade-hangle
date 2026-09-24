@@ -2,6 +2,8 @@
 #include "burner.h"
 #include "luaengine.h"
 #include <shlobj.h>
+#include <imm.h>
+#pragma comment(lib, "imm32.lib")
 
 #define		HORIZONTAL_ORIENTED_RES		0
 #define		VERTICAL_ORIENTED_RES			1
@@ -109,12 +111,16 @@ int ActivateChat()
 
 	DeActivateChat();
 
-	// Create an invisible edit control
-	hwndChat = CreateWindow(
+	// Create an invisible (layered, zero-alpha) edit control -- IME composition commit
+	// can silently fail to reach a truly WS_VISIBLE-less window, so we keep it
+	// WS_VISIBLE for the OS/IME's sake but make it fully transparent on screen.
+	hwndChat = CreateWindowEx(
+		WS_EX_LAYERED,
 		_T("EDIT"), NULL,
-		WS_CHILD | ES_LEFT,
+		WS_CHILD | WS_VISIBLE | ES_LEFT,
 		0, rect.bottom - 32, rect.right, 32,
 		hScrnWnd, (HMENU)ID_NETCHAT, (HINSTANCE)GetWindowLongPtr(hScrnWnd, GWLP_HINSTANCE), NULL);                // pointer not needed
+	SetLayeredWindowAttributes(hwndChat, 0, 0, LWA_ALPHA);
 
 	EditText[0] = 0;
 	bEditTextChanged = true;
@@ -123,6 +129,16 @@ int ActivateChat()
 	SendMessage(hwndChat, EM_LIMITTEXT, MAX_CHAT_SIZE, 0);			// Limit the amount of text
 
 	SetFocus(hwndChat);
+
+	// Default the IME to Korean/Hangul input mode so chat starts ready for
+	// Korean without needing a manual han/eng toggle each time.
+	{
+		HIMC himc = ImmGetContext(hwndChat);
+		if (himc) {
+			ImmSetConversionStatus(himc, IME_CMODE_HANGUL, IME_SMODE_NONE);
+			ImmReleaseContext(hwndChat, himc);
+		}
+	}
 
 	return 0;
 }

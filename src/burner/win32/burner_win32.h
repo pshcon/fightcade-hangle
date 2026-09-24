@@ -443,6 +443,7 @@ int NetworkGetInput();
 
 // fbn_ggpo.cpp
 void QuarkInit(TCHAR *connect);
+void ChatEncodeForSend(const TCHAR *wtext, char *out, int outSize);
 void QuarkEnd();
 void QuarkTogglePerfMon();
 void QuarkRunIdle(int ms);

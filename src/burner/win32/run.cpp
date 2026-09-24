@@ -751,8 +751,8 @@ int RunMessageLoop()
 										}
 									}
 									if (i) {
-										char text[MAX_CHAT_SIZE + 1];
-										TCHARToANSI(EditText, text, MAX_CHAT_SIZE + 1);
+										char text[(MAX_CHAT_SIZE * 4) + 32];
+										ChatEncodeForSend(EditText, text, sizeof(text));
 										if (kNetGame) {
 											QuarkSendChatText(text);
 										}
@@ -928,7 +928,7 @@ int RunMessageLoop()
 
 				// Check for messages for dialogs etc.
 				if (AppMessage(&Msg)) {
-					if (TranslateAccelerator(hScrnWnd, hAccel, &Msg) == 0) {
+					if (bEditActive || TranslateAccelerator(hScrnWnd, hAccel, &Msg) == 0) {
 						if (bEditActive) {
 							TranslateMessage(&Msg);
 						}

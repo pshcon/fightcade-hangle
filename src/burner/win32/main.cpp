@@ -1092,6 +1092,41 @@ static void CreateSupportFolders()
 }
 
 // Main program entry point
+static void ExtractHangulFontResource(HINSTANCE hInstance, int resId, const TCHAR *outPath)
+{
+	HRSRC hRes = FindResource(hInstance, MAKEINTRESOURCE(resId), RT_RCDATA);
+	if (!hRes) return;
+	HGLOBAL hData = LoadResource(hInstance, hRes);
+	if (!hData) return;
+	void *pData = LockResource(hData);
+	DWORD size = SizeofResource(hInstance, hRes);
+	if (!pData || !size) return;
+
+	// Skip rewriting if a same-size copy is already on disk: freshly written
+	// files can get held by real-time AV scanning for a moment, and if our
+	// own font loader tries to open it right after, that first launch can
+	// fail. Re-extracting every single launch needlessly re-triggers that.
+	WIN32_FILE_ATTRIBUTE_DATA existing;
+	if (GetFileAttributesEx(outPath, GetFileExInfoStandard, &existing)) {
+		if (existing.nFileSizeLow == size && existing.nFileSizeHigh == 0) {
+			return;
+		}
+	}
+
+	HANDLE hFile = CreateFile(outPath, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (hFile == INVALID_HANDLE_VALUE) return;
+	DWORD written = 0;
+	WriteFile(hFile, pData, size, &written, NULL);
+	CloseHandle(hFile);
+}
+
+static void ExtractHangulFontResources()
+{
+	CreateDirectory(_T("ui"), NULL);
+	ExtractHangulFontResource(hAppInst, IDR_HANGUL_FONT_FNT, _T("ui\\font.fnt"));
+	ExtractHangulFontResource(hAppInst, IDR_HANGUL_FONT_PNG, _T("ui\\font_0.png"));
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nShowCmd)
 {
 	WSADATA wsaData;
@@ -1117,6 +1152,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nShowCmd
 	nAppShowCmd = nShowCmd;
 
 	AppDirectory();								// Set current directory to be the applications directory
+
+	ExtractHangulFontResources();					// Self-install the bundled Korean font atlas into ui\
 
 	// Make sure there are roms and cfg subdirectories
 	TCHAR szDirs[][MAX_PATH] = {

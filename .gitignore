@@ -1,13 +1,69 @@
-﻿.vs
-projectfiles/visualstudio-2019/enc_temp_folder
-projectfiles/visualstudio-2015/m68kmake.exe
-projectfiles/visualstudio-2015/m68kmake.obj
-projectfiles/visualstudio-2015/fba_vs2015.VC.db
-projectfiles/visualstudio-2015/fba_vs2015.VC.VC.opendb
-src/dep/generated
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Linker files
+*.ilk
+
+# Debugger Files
+*.pdb
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+*.so.*
+
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Build directories
 build/
-*.db
-*.opendb
-src/intf/video/win32/detector_buffers.h
-src/intf/video/win32/detector_loaders.h
-UPDATE_GIT_IGNORE.BAT
+Build/
+build-*/
+
+# CMake generated files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+install_manifest.txt
+compile_commands.json
+
+# Temporary files
+*.tmp
+*.log
+*.bak
+*.swp
+
+# vcpkg
+vcpkg_installed/
+
+# debug information files
+*.dwo
+
+# test output & cache
+Testing/
+.cache/

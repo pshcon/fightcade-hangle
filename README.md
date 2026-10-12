@@ -12,7 +12,7 @@
 - 상대방도 이 패치를 쓰는지 자동 감지해서 채팅창에 표시
 - 가끔 게임이 멈춰서 재부팅해야 했던 문제 해결 (ASSERTION ERROR)
 
-## 검사결과
+## 바이러스 절대없음
 - SHA256: `e0a12dd8d37632b7a42358e98f155e76cde25293457cf1673a8253aee99b981c`
 - VirusTotal 검사결과: [70여개 백신 전부 무결정(Undetected)](https://www.virustotal.com/gui/file/e0a12dd8d37632b7a42358e98f155e76cde25293457cf1673a8253aee99b981c)
 - 소스코드 전체 공개 ([source 브랜치](https://github.com/pshcon/fightcade-hangle/tree/source)) — 원본 [FBNeo](https://github.com/fightcadeorg/fightcade-fbneo)에 한글패치 코드만 추가한 것이며, 직접 빌드해서 검증 가능함

@@ -96,8 +96,22 @@ void SetPauseMode(bool bPause)
 	}
 }
 
+// Last IME mode used in chat (true = Hangul, false = English). Chat reopens in the
+// same mode it was last closed in; Hangul by default for the first chat.
+static bool bChatLastHangul = true;
+
 void DeActivateChat()
 {
+	if (hwndChat) {
+		HIMC himc = ImmGetContext(hwndChat);
+		if (himc) {
+			DWORD conv = 0, sent = 0;
+			if (ImmGetConversionStatus(himc, &conv, &sent)) {
+				bChatLastHangul = (conv & IME_CMODE_HANGUL) != 0;
+			}
+			ImmReleaseContext(hwndChat, himc);
+		}
+	}
 	bEditActive = false;
 	DestroyWindow(hwndChat);
 	hwndChat = NULL;
@@ -111,16 +125,16 @@ int ActivateChat()
 
 	DeActivateChat();
 
-	// Create an invisible (layered, zero-alpha) edit control -- IME composition commit
-	// can silently fail to reach a truly WS_VISIBLE-less window, so we keep it
-	// WS_VISIBLE for the OS/IME's sake but make it fully transparent on screen.
+	// Input-only edit control. IME composition commit can silently fail to reach a
+	// window that is not WS_VISIBLE, so it stays WS_VISIBLE -- but it is 1x1 and placed
+	// just below the client area, so the parent clips it away completely. No layered
+	// (alpha-composited) window over the game surface, unlike the earlier version.
 	hwndChat = CreateWindowEx(
-		WS_EX_LAYERED,
+		0,
 		_T("EDIT"), NULL,
-		WS_CHILD | WS_VISIBLE | ES_LEFT,
-		0, rect.bottom - 32, rect.right, 32,
+		WS_CHILD | WS_VISIBLE | ES_LEFT | ES_AUTOHSCROLL,
+		0, rect.bottom, 1, 1,
 		hScrnWnd, (HMENU)ID_NETCHAT, (HINSTANCE)GetWindowLongPtr(hScrnWnd, GWLP_HINSTANCE), NULL);                // pointer not needed
-	SetLayeredWindowAttributes(hwndChat, 0, 0, LWA_ALPHA);
 
 	EditText[0] = 0;
 	bEditTextChanged = true;
@@ -130,12 +144,11 @@ int ActivateChat()
 
 	SetFocus(hwndChat);
 
-	// Default the IME to Korean/Hangul input mode so chat starts ready for
-	// Korean without needing a manual han/eng toggle each time.
+	// Start the IME in whichever mode (Hangul/English) chat was last used in.
 	{
 		HIMC himc = ImmGetContext(hwndChat);
 		if (himc) {
-			ImmSetConversionStatus(himc, IME_CMODE_HANGUL, IME_SMODE_NONE);
+			ImmSetConversionStatus(himc, bChatLastHangul ? IME_CMODE_HANGUL : IME_CMODE_ALPHANUMERIC, IME_SMODE_NONE);
 			ImmReleaseContext(hwndChat, himc);
 		}
 	}
@@ -3113,7 +3126,7 @@ static void OnSize(HWND, UINT state, int cx, int cy)
 		bool bSizeChanged = false;
 
 		if (hwndChat) {
-			MoveWindow(hwndChat, 0, cy - 32, cx, 32, FALSE);
+			MoveWindow(hwndChat, 0, cy, 1, 1, FALSE);
 		}
 
 		if (state == SIZE_MAXIMIZED) {
@@ -3455,6 +3468,11 @@ int ScrnInit()
 		ScrnExit();
 		return 1;
 	}
+
+	// With a Hangul IME active, the game window receives VK_PROCESSKEY instead of the
+	// real key, so the 'T' chat hotkey was silently swallowed (Ctrl+T bypassed the IME).
+	// Detach the IME from the game window; the chat edit control gets its own context.
+	ImmAssociateContext(hScrnWnd, NULL);
 
 	if (!nVidFullscreen) {
 		// Create the menu toolbar itself

@@ -16,6 +16,7 @@
 
 ## 바이러스 절대없음
 - SHA256: `497785e26365ebab594b33f19ddf31af1de24b8d556b80844833d3b9f8eb087f`
+- VirusTotal 검사결과: [70여개 백신 전부 무결정(Undetected)](https://www.virustotal.com/gui/file/497785e26365ebab594b33f19ddf31af1de24b8d556b80844833d3b9f8eb087f)
 - 소스코드 전체 공개 ([source 브랜치](https://github.com/pshcon/fightcade-hangle/tree/source)) — 원본 [FBNeo](https://github.com/fightcadeorg/fightcade-fbneo)에 한글패치 코드만 추가한 것이며, 직접 빌드해서 검증 가능함
 
 받은 zip의 exe 파일 SHA256 값이 위와 같은지 확인하려면 PowerShell에서:

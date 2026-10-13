@@ -8,6 +8,7 @@
 
 #ifdef USE_SDL
  #include "SDL.h"
+#include <vector>
 #endif
 
 #include "burner.h"
@@ -1106,10 +1107,21 @@ static void ExtractHangulFontResource(HINSTANCE hInstance, int resId, const TCHA
 	// files can get held by real-time AV scanning for a moment, and if our
 	// own font loader tries to open it right after, that first launch can
 	// fail. Re-extracting every single launch needlessly re-triggers that.
+	// Compare contents too, not just size: a re-generated font atlas can keep the
+	// exact same .fnt size, and a stale copy would then not match the new texture.
 	WIN32_FILE_ATTRIBUTE_DATA existing;
 	if (GetFileAttributesEx(outPath, GetFileExInfoStandard, &existing)) {
 		if (existing.nFileSizeLow == size && existing.nFileSizeHigh == 0) {
-			return;
+			HANDLE hOld = CreateFile(outPath, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+			if (hOld != INVALID_HANDLE_VALUE) {
+				std::vector<char> oldData(size);
+				DWORD got = 0;
+				bool same = ReadFile(hOld, oldData.data(), size, &got, NULL) && got == size && memcmp(oldData.data(), pData, size) == 0;
+				CloseHandle(hOld);
+				if (same) {
+					return;
+				}
+			}
 		}
 	}
 

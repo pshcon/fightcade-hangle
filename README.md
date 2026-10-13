@@ -2,10 +2,10 @@
 한글패치 - inGame
 
 ## 설치법
-  1. Fightcade 완전히 종료
+  1. 대전 중이거나 열려 있는 게임(에뮬레이터) 창을 모두 종료 (Fightcade 로비는 켜둬도 됨)
   2. 오른쪽 Releases에서 최신 버전의 fcadefbneo_.zip 받아서 압축 풀기
-  3. Fightcade\emulator\fbneo 폴더의 fcadefbneo.exe를 새로 받은 파일로 교체
-  4. Fightcade 재실행
+  3. Fightcade\emulatorbneo 폴더의 fcadefbneo.exe를 새로 받은 파일로 교체
+  4. 다음 대전부터 바로 적용됨 (Fightcade 재시작 필요 없음)
 
 ## 주요기능
 - 인게임 채팅에서 한글 입력/표시 지원 (채팅창 열면 자동으로 한글모드로 시작)

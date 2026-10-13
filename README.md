@@ -4,7 +4,7 @@
 ## 설치법
   1. 대전 중이거나 열려 있는 게임(에뮬레이터) 창을 모두 종료 (Fightcade 로비는 켜둬도 됨)
   2. 오른쪽 Releases에서 최신 버전의 fcadefbneo_.zip 받아서 압축 풀기
-  3. Fightcade\emulatorbneo 폴더의 fcadefbneo.exe를 새로 받은 파일로 교체
+  3. Fightcade\emulator\fbneo 폴더의 fcadefbneo.exe를 새로 받은 파일로 교체
   4. 다음 대전부터 바로 적용됨 (Fightcade 재시작 필요 없음)
 
 ## 주요기능
